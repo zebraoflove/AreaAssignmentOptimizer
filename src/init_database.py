@@ -3,40 +3,27 @@ AreaAssignmentOptimizer
 
 Создание структуры базы данных SQLite.
 
-Этот модуль отвечает исключительно за:
-- создание таблиц;
-- создание представлений (VIEW);
-- создание индексов;
-- включение внешних ключей.
+Модуль отвечает только за создание схемы базы данных
+из SQL-файлов.
 
-Модуль не импортирует данные.
+SQL хранится отдельно в каталоге database/.
 """
 
 from pathlib import Path
 import sqlite3
 
-
-# ==========================================================
-# Пути
-# ==========================================================
-
-PROJECT = Path("/content/drive/MyDrive/RussiaCountriesProject")
-DATABASE_DIR = PROJECT / "database"
-DATABASE_DIR.mkdir(parents=True, exist_ok=True)
-
-DB_PATH = DATABASE_DIR / "world.db"
+from src.common.config import DATABASE_PATH, ROOT_DIR
 
 
-# ==========================================================
-# Подключение
-# ==========================================================
+SCHEMA_FILE = ROOT_DIR / "database" / "schema.sql"
+INDEXES_FILE = ROOT_DIR / "database" / "indexes.sql"
+VIEWS_FILE = ROOT_DIR / "database" / "views.sql"
+
 
 def connect() -> sqlite3.Connection:
-    """
-    Создаёт соединение с SQLite.
-    """
+    """Создаёт подключение к SQLite."""
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DATABASE_PATH)
 
     conn.execute("PRAGMA foreign_keys = ON;")
 
@@ -45,77 +32,48 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
-# ==========================================================
-# Выполнение SQL
-# ==========================================================
+def execute_sql_file(conn: sqlite3.Connection, path: Path) -> None:
+    """Выполняет SQL-файл."""
 
-def execute_script(conn: sqlite3.Connection, sql: str) -> None:
-    """
-    Выполняет SQL-скрипт.
-    """
+    if not path.exists():
+        return
 
-    conn.executescript(sql)
+    sql = path.read_text(encoding="utf-8").strip()
 
+    if not sql:
+        raise RuntimeError(f"SQL file is empty: {path}")
 
-# ==========================================================
-# Создание схемы
-# ==========================================================
-
-def create_schema(conn: sqlite3.Connection) -> None:
-
-    sql = """
-    --------------------------------------------------------------------
-    -- Версия схемы
-    --------------------------------------------------------------------
-
-    CREATE TABLE IF NOT EXISTS schema_version (
-
-        version INTEGER PRIMARY KEY,
-
-        applied_at TEXT NOT NULL
-
-    );
+    if sql:
+        conn.executescript(sql)
 
 
+def create_database() -> None:
+    """Создаёт структуру базы данных."""
 
-    --------------------------------------------------------------------
-    -- Субъекты Российской Федерации
-    --------------------------------------------------------------------
+    conn = connect()
 
-    CREATE TABLE IF NOT EXISTS subjects (
+    try:
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        execute_sql_file(conn, SCHEMA_FILE)
+        
+        if INDEXES_FILE.exists():
+            execute_sql_file(conn, INDEXES_FILE)
+        
+        if VIEWS_FILE.exists():
+            execute_sql_file(conn, VIEWS_FILE)
 
-        name TEXT NOT NULL UNIQUE,
+        conn.commit()
 
-        type TEXT NOT NULL,
+        print("[OK] Database schema created.")
 
-        federal_district TEXT NOT NULL,
+    finally:
 
-        area_km2 REAL NOT NULL
-            CHECK(area_km2 > 0)
-
-    );
+        conn.close()
 
 
+def main() -> None:
+    create_database()
 
-    --------------------------------------------------------------------
-    -- Государства
-    --------------------------------------------------------------------
 
-    CREATE TABLE IF NOT EXISTS countries (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        name TEXT NOT NULL UNIQUE,
-
-        iso_alpha2 TEXT,
-
-        iso_alpha3 TEXT,
-
-        continent TEXT NOT NULL,
-
-        area_km2 REAL NOT NULL
-            CHECK(area_km2 > 0)
-
-    );
+if __name__ == "__main__":
+    main()
