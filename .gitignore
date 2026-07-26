@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.cursor/
+
+# Temporary
+*.tmp
+*.bak
+*.log
+
+# SQLite database
+*.db
+*.sqlite
+*.sqlite3
