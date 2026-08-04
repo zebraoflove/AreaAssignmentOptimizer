@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS subjects (
 -- Countries
 -- ==========================================================
 
-CREATE TABLE IF NOT EXISTS countries (
+CREATE TABLE IF NOT EXISTS countries_raw (
 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
