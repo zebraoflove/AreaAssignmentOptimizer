@@ -27,6 +27,7 @@ DATABASE_DIR = ROOT_DIR / "database"
 EXPORT_DIR = ROOT_DIR / "exports"
 OUTPUT_DIR = ROOT_DIR / "output"
 LOGS_DIR = ROOT_DIR / "logs"
+ROSSTAT_2025_DIR = ROOT_DIR / "data" / "source" / "rosstat" / "regions_2025"
 
 
 # ----------------------------------------------------------

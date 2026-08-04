@@ -18,3 +18,15 @@ __pycache__/
 *.db
 *.sqlite
 *.sqlite3
+
+# Source datasets
+data/source/
+
+# Temporary scripts
+check_excel.py
+
+# macOS
+.DS_Store
+
+# Excel temporary files
+~$*.xlsx
