@@ -37,7 +37,7 @@ ROSSTAT_2025_DIR = ROOT_DIR / "data" / "source" / "rosstat" / "regions_2025"
 DATABASE_PATH = DATABASE_DIR / "world.db"
 
 COUNTRIES_RAW_PATH = RAW_DATA_DIR / "countries_raw.csv"
-SUBJECTS_PATH = RAW_DATA_DIR / "subjects.csv"
+SUBJECTS_PATH = RAW_DATA_DIR / "subjects_raw.csv"
 ADJUSTMENTS_PATH = RAW_DATA_DIR / "territory_adjustments.csv"
 
 

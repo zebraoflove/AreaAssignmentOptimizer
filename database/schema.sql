@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 -- Subjects of the Russian Federation
 -- ==========================================================
 
-CREATE TABLE IF NOT EXISTS subjects (
+CREATE TABLE IF NOT EXISTS subjects_raw (
 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -155,5 +155,45 @@ CREATE TABLE IF NOT EXISTS assignment_items (
         ON DELETE RESTRICT,
 
     UNIQUE(assignment_id, country_id)
+
+);
+
+-- ==========================================================
+-- Countries inside final assignments
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS countries_final (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    name TEXT NOT NULL UNIQUE,
+
+    iso_alpha2 TEXT,
+
+    iso_alpha3 TEXT,
+
+    continent TEXT NOT NULL,
+
+    area_km2 REAL NOT NULL
+        CHECK(area_km2 > 0)
+
+);
+
+-- ==========================================================
+-- Russian subjects inside final assignments
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS subjects_final (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    name TEXT NOT NULL UNIQUE,
+
+    type TEXT NOT NULL,
+
+    federal_district TEXT NOT NULL,
+
+    area_km2 REAL NOT NULL
+        CHECK(area_km2 > 0)
 
 );

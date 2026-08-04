@@ -103,11 +103,11 @@ def save_subjects(subjects):
 
     try:
 
-        conn.execute("DELETE FROM subjects")
+        conn.execute("DELETE FROM subjects_raw")
 
         conn.executemany(
             """
-            INSERT INTO subjects
+            INSERT INTO subjects_raw
             (
                 name,
                 type,
