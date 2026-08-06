@@ -1,5 +1,7 @@
 from src.common.database import connect
 
+DEBUG = False
+
 def read_subjects(conn):
     """Читает подготовленные субъекты РФ."""
 
@@ -61,7 +63,7 @@ def generate_candidates(subjects, countries):
                             - country["area_km2"]
                         ),
                     }
-                    for country in ranked_countries[:10]
+                    for country in ranked_countries
                 ],
             }
         )
@@ -126,8 +128,9 @@ def main():
         subjects = read_subjects(conn)
         countries = read_countries(conn)
 
-        print(f"Subjects: {len(subjects)}")
-        print(f"Countries: {len(countries)}")
+        if DEBUG:
+            print(f"Subjects: {len(subjects)}")
+            print(f"Countries: {len(countries)}")
 
         candidate_sets = generate_candidates(
             subjects,
