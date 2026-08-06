@@ -7,6 +7,12 @@ from src.common.database import connect
 import re
 
 
+CONTINENT_FIXES = {
+    "Bouvet Island": "Antarctica",
+    "Heard Island and McDonald Islands": "Antarctica",
+}
+
+
 def read_raw_countries(conn):
     """Читает страны из countries_raw."""
 
@@ -42,6 +48,16 @@ def normalize_country(row):
         " ",
         row["name"].strip(),
     )
+
+    continent = row["continent"].strip()
+
+    if not continent:
+        continent = CONTINENT_FIXES.get(
+            row["name"],
+            "",
+        )
+
+    row["continent"] = continent
 
     return row
 

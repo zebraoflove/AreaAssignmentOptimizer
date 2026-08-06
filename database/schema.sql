@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 );
 
 -- ==========================================================
--- Subjects of the Russian Federation
+-- Subjects (raw)
 -- ==========================================================
 
 CREATE TABLE IF NOT EXISTS subjects_raw (
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS subjects_raw (
 );
 
 -- ==========================================================
--- Countries
+-- Countries (raw)
 -- ==========================================================
 
 CREATE TABLE IF NOT EXISTS countries_raw (
@@ -79,87 +79,26 @@ CREATE TABLE IF NOT EXISTS territory_adjustments (
 );
 
 -- ==========================================================
--- Candidate sets
+-- Prepared Russian subjects
 -- ==========================================================
 
-CREATE TABLE IF NOT EXISTS candidate_sets (
+CREATE TABLE IF NOT EXISTS subjects_final (
 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    subject_id INTEGER NOT NULL,
+    name TEXT NOT NULL UNIQUE,
 
-    FOREIGN KEY(subject_id)
-        REFERENCES subjects(id)
-        ON DELETE CASCADE
+    type TEXT NOT NULL,
+
+    federal_district TEXT NOT NULL,
+
+    area_km2 REAL NOT NULL
+        CHECK(area_km2 > 0)
 
 );
 
 -- ==========================================================
--- Countries inside candidate sets
--- ==========================================================
-
-CREATE TABLE IF NOT EXISTS candidate_set_items (
-
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    candidate_set_id INTEGER NOT NULL,
-
-    country_id INTEGER NOT NULL,
-
-    FOREIGN KEY(candidate_set_id)
-        REFERENCES candidate_sets(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY(country_id)
-        REFERENCES countries(id)
-        ON DELETE RESTRICT,
-
-    UNIQUE(candidate_set_id, country_id)
-
-);
-
--- ==========================================================
--- Final assignments
--- ==========================================================
-
-CREATE TABLE IF NOT EXISTS assignments (
-
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    subject_id INTEGER NOT NULL,
-
-    FOREIGN KEY(subject_id)
-        REFERENCES subjects(id)
-        ON DELETE CASCADE
-
-);
-
--- ==========================================================
--- Countries inside final assignments
--- ==========================================================
-
-CREATE TABLE IF NOT EXISTS assignment_items (
-
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    assignment_id INTEGER NOT NULL,
-
-    country_id INTEGER NOT NULL,
-
-    FOREIGN KEY(assignment_id)
-        REFERENCES assignments(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY(country_id)
-        REFERENCES countries(id)
-        ON DELETE RESTRICT,
-
-    UNIQUE(assignment_id, country_id)
-
-);
-
--- ==========================================================
--- Countries inside final assignments
+-- Prepared countries
 -- ==========================================================
 
 CREATE TABLE IF NOT EXISTS countries_final (
@@ -180,20 +119,81 @@ CREATE TABLE IF NOT EXISTS countries_final (
 );
 
 -- ==========================================================
--- Russian subjects inside final assignments
+-- Candidate sets
 -- ==========================================================
 
-CREATE TABLE IF NOT EXISTS subjects_final (
+CREATE TABLE IF NOT EXISTS candidate_sets (
 
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    name TEXT NOT NULL UNIQUE,
+    subject_id INTEGER NOT NULL,
 
-    type TEXT NOT NULL,
+    FOREIGN KEY(subject_id)
+        REFERENCES subjects_final(id)
+        ON DELETE CASCADE
 
-    federal_district TEXT NOT NULL,
+);
 
-    area_km2 REAL NOT NULL
-        CHECK(area_km2 > 0)
+-- ==========================================================
+-- Candidate set items
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS candidate_set_items (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    candidate_set_id INTEGER NOT NULL,
+
+    country_id INTEGER NOT NULL,
+
+    FOREIGN KEY(candidate_set_id)
+        REFERENCES candidate_sets(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY(country_id)
+        REFERENCES countries_final(id)
+        ON DELETE RESTRICT,
+
+    UNIQUE(candidate_set_id, country_id)
+
+);
+
+-- ==========================================================
+-- Assignments
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS assignments (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    subject_id INTEGER NOT NULL,
+
+    FOREIGN KEY(subject_id)
+        REFERENCES subjects_final(id)
+        ON DELETE CASCADE
+
+);
+
+-- ==========================================================
+-- Assignment items
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS assignment_items (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    assignment_id INTEGER NOT NULL,
+
+    country_id INTEGER NOT NULL,
+
+    FOREIGN KEY(assignment_id)
+        REFERENCES assignments(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY(country_id)
+        REFERENCES countries_final(id)
+        ON DELETE RESTRICT,
+
+    UNIQUE(assignment_id, country_id)
 
 );
