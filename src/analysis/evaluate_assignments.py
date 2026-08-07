@@ -173,15 +173,21 @@ def print_statistics(stats):
     )
 
 
+def evaluate_assignments(conn):
+    """Вычисляет статистику распределения."""
+
+    rows = read_assignments(conn)
+
+    return calculate_statistics(rows)
+
+
 def main():
 
     conn = connect()
 
     try:
 
-        rows = read_assignments(conn)
-
-        stats = calculate_statistics(rows)
+        stats = evaluate_assignments(conn)
 
         print_statistics(stats)
 

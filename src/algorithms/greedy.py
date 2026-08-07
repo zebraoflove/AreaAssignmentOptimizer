@@ -1,5 +1,36 @@
 from src.common.database import connect
 
+from enum import Enum
+
+# ==========================================================
+# Debug
+# ==========================================================
+
+DEBUG = False
+
+# ==========================================================
+# Algorithm configuration
+# ==========================================================
+
+ALGORITHM_NAME = "Greedy"
+
+class SubjectOrder(Enum):
+    ORIGINAL = "original"
+    ASCENDING = "ascending"
+    DESCENDING = "descending"
+
+SUBJECT_ORDER = SubjectOrder.ORIGINAL
+
+
+def get_configuration():
+    """Возвращает конфигурацию алгоритма."""
+
+    return {
+        "Algorithm": ALGORITHM_NAME,
+        "Subject order": SUBJECT_ORDER.value,
+        "Debug": DEBUG,
+    }
+
 
 def read_candidate_sets(conn):
     """Читает наборы кандидатов."""
@@ -10,6 +41,7 @@ def read_candidate_sets(conn):
             cs.id AS candidate_set_id,
             cs.subject_id,
             s.name AS subject_name,
+            s.area_km2 AS subject_area,
 
             c.id AS country_id,
             c.name AS country_name
@@ -42,6 +74,7 @@ def read_candidate_sets(conn):
             candidate_sets[subject_id] = {
                 "subject_id": subject_id,
                 "subject_name": row["subject_name"],
+                "subject_area": row["subject_area"],
                 "countries": [],
             }
 
@@ -55,6 +88,29 @@ def read_candidate_sets(conn):
     return list(candidate_sets.values())
 
 
+def order_candidate_sets(candidate_sets):
+
+    if SUBJECT_ORDER is SubjectOrder.ORIGINAL:
+        return candidate_sets
+
+    if SUBJECT_ORDER is SubjectOrder.ASCENDING:
+        return sorted(
+            candidate_sets,
+            key=lambda x: x["subject_area"],
+        )
+
+    if SUBJECT_ORDER is SubjectOrder.DESCENDING:
+        return sorted(
+            candidate_sets,
+            key=lambda x: x["subject_area"],
+            reverse=True,
+        )
+
+    raise ValueError(
+        f"Unsupported subject order: {SUBJECT_ORDER}"
+    )
+
+
 def generate_assignments(candidate_sets):
     """Формирует окончательные назначения жадным алгоритмом."""
 
@@ -62,6 +118,10 @@ def generate_assignments(candidate_sets):
 
     used_countries = set()
 
+    candidate_sets = order_candidate_sets(
+        candidate_sets
+    )
+    
     for candidate_set in candidate_sets:
 
         for country in candidate_set["countries"]:
@@ -152,9 +212,8 @@ def save_assignments(conn, assignments):
 
     conn.commit()
 
-    print(
-        f"Saved {len(assignments)} assignments."
-    )
+    if DEBUG:
+        print(f"Saved {len(assignments)} assignments.")
 
 
 def main():
@@ -164,6 +223,8 @@ def main():
     try:
 
         candidate_sets = read_candidate_sets(conn)
+
+        print_algorithm_configuration()
 
         assignments = generate_assignments(
             candidate_sets

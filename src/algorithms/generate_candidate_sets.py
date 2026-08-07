@@ -54,6 +54,7 @@ def generate_candidates(subjects, countries):
             {
                 "subject_id": subject["id"],
                 "subject_name": subject["name"],
+                "subject_area": subject["area_km2"],
                 "countries": [
                     {
                         "country_id": country["id"],
