@@ -30,3 +30,5 @@ check_excel.py
 
 # Excel temporary files
 ~$*.xlsx
+# Experiment results
+exports/experiments/
