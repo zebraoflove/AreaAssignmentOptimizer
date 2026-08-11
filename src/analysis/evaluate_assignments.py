@@ -49,15 +49,31 @@ def calculate_statistics(rows):
 
     worst_match = None
 
+    subjects = set()
+
+    countries = set()
+
+    constraint_violations = 0
+
     for row in rows:
 
+        subjects.add(
+            row["subject_name"]
+        )
+
+        countries.add(
+            row["country_name"]
+        )
+
         absolute_error = abs(
-            row["subject_area"] -
+            row["subject_area"]
+            -
             row["country_area"]
         )
 
         relative_error = (
-            absolute_error /
+            absolute_error
+            /
             row["subject_area"]
         ) * 100
 
@@ -68,6 +84,13 @@ def calculate_statistics(rows):
         relative_errors.append(
             relative_error
         )
+
+        if (
+            row["country_area"]
+            >
+            row["subject_area"]
+        ):
+            constraint_violations += 1
 
         result = {
             **row,
@@ -93,19 +116,80 @@ def calculate_statistics(rows):
         ):
             worst_match = result
 
+    sorted_absolute_errors = sorted(
+        absolute_errors
+    )
+
+    sorted_relative_errors = sorted(
+        relative_errors
+    )
+
+    count = len(rows)
+
+    middle = count // 2
+
+    if count % 2 == 0:
+
+        median_absolute_error = (
+            sorted_absolute_errors[middle - 1]
+            +
+            sorted_absolute_errors[middle]
+        ) / 2
+
+        median_relative_error = (
+            sorted_relative_errors[middle - 1]
+            +
+            sorted_relative_errors[middle]
+        ) / 2
+
+    else:
+
+        median_absolute_error = (
+            sorted_absolute_errors[middle]
+        )
+
+        median_relative_error = (
+            sorted_relative_errors[middle]
+        )
+
     return {
 
-        "count": len(rows),
+        "count":
+            count,
+
+        "unique_subjects":
+            len(subjects),
+
+        "unique_countries":
+            len(countries),
+
+        "total_absolute_error":
+            sum(absolute_errors),
 
         "average_absolute_error":
             sum(absolute_errors)
             /
-            len(absolute_errors),
+            count,
+
+        "median_absolute_error":
+            median_absolute_error,
+
+        "maximum_absolute_error":
+            max(absolute_errors),
 
         "average_relative_error":
             sum(relative_errors)
             /
-            len(relative_errors),
+            count,
+
+        "median_relative_error":
+            median_relative_error,
+
+        "maximum_relative_error":
+            max(relative_errors),
+
+        "constraint_violations":
+            constraint_violations,
 
         "best_match":
             best_match,

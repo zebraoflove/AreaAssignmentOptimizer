@@ -6,6 +6,18 @@ from src.analysis.evaluate_assignments import (
     evaluate_assignments,
 )
 
+from src.experiments.export_excel import (
+    export_excel,
+)
+
+from pathlib import Path
+
+EXPORTS_DIR = (
+    Path(__file__).resolve().parents[2]
+    / "exports"
+    / "experiments"
+)
+
 
 def print_header():
     """Выводит заголовок отчёта."""
@@ -101,13 +113,53 @@ def print_assignment_statistics(
     )
 
     print_key_value(
+        "Unique subjects",
+        statistics["unique_subjects"],
+    )
+
+    print_key_value(
+        "Unique countries",
+        statistics["unique_countries"],
+    )
+
+    print_key_value(
+        "Total absolute error",
+        f"{statistics['total_absolute_error']:.1f} km²",
+    )
+
+    print_key_value(
         "Average absolute error",
         f"{statistics['average_absolute_error']:.1f} km²",
     )
 
     print_key_value(
+        "Median absolute error",
+        f"{statistics['median_absolute_error']:.1f} km²",
+    )
+
+    print_key_value(
+        "Maximum absolute error",
+        f"{statistics['maximum_absolute_error']:.1f} km²",
+    )
+
+    print_key_value(
         "Average relative error",
         f"{statistics['average_relative_error']:.2f}%",
+    )
+
+    print_key_value(
+        "Median relative error",
+        f"{statistics['median_relative_error']:.2f}%",
+    )
+
+    print_key_value(
+        "Maximum relative error",
+        f"{statistics['maximum_relative_error']:.2f}%",
+    )
+
+    print_key_value(
+        "Constraint violations",
+        statistics["constraint_violations"],
     )
 
     print()
@@ -129,7 +181,12 @@ def print_assignment_statistics(
     )
 
     print_key_value(
-        "Error",
+        "Absolute error",
+        f"{statistics['best_match']['absolute_error']:.1f} km²",
+    )
+
+    print_key_value(
+        "Relative error",
         f"{statistics['best_match']['relative_error']:.2f}%",
     )
 
@@ -152,7 +209,12 @@ def print_assignment_statistics(
     )
 
     print_key_value(
-        "Error",
+        "Absolute error",
+        f"{statistics['worst_match']['absolute_error']:.1f} km²",
+    )
+
+    print_key_value(
+        "Relative error",
         f"{statistics['worst_match']['relative_error']:.2f}%",
     )
 
@@ -208,6 +270,28 @@ def main():
             evaluate_assignments(
                 conn,
             )
+        )
+
+        experiment_dir = (
+            EXPORTS_DIR
+            / "greedy_original_constraint"
+        )
+
+        experiment_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        output_path = (
+            experiment_dir
+            / "report.xlsx"
+        )
+
+        export_excel(
+            conn,
+            configuration,
+            statistics,
+            output_path,
         )
 
         print_report(
