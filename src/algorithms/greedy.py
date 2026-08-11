@@ -19,7 +19,7 @@ class SubjectOrder(Enum):
     ASCENDING = "ascending"
     DESCENDING = "descending"
 
-SUBJECT_ORDER = SubjectOrder.ORIGINAL
+SUBJECT_ORDER = SubjectOrder.ASCENDING
 
 
 def get_configuration():

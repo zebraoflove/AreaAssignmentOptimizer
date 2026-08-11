@@ -43,10 +43,18 @@ def generate_candidates(subjects, countries):
 
     for subject in subjects:
 
+        eligible_countries = [
+            country
+            for country in countries
+            if country["area_km2"]
+            <= subject["area_km2"]
+        ]
+
         ranked_countries = sorted(
-            countries,
-            key=lambda country: abs(
-                subject["area_km2"] - country["area_km2"]
+            eligible_countries,
+            key=lambda country: (
+                subject["area_km2"]
+                - country["area_km2"]
             ),
         )
 
@@ -59,7 +67,7 @@ def generate_candidates(subjects, countries):
                     {
                         "country_id": country["id"],
                         "country_name": country["name"],
-                        "difference_km2": abs(
+                        "difference_km2": (
                             subject["area_km2"]
                             - country["area_km2"]
                         ),
