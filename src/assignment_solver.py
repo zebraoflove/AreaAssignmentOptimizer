@@ -1,6 +1,0 @@
-"""
-AreaAssignmentOptimizer
-
-Module:
-"""
-
