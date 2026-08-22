@@ -128,36 +128,37 @@ def save_candidate_sets(conn, candidate_sets):
 
     conn.commit()
 
-def main():
+def rebuild_candidate_sets(conn):
+    """Полностью пересобирает кандидатуры на основе countries_final."""
 
+    subjects = read_subjects(conn)
+    countries = read_countries(conn)
+
+    candidate_sets = generate_candidates(
+        subjects,
+        countries,
+    )
+
+    save_candidate_sets(
+        conn,
+        candidate_sets,
+    )
+
+    return len(candidate_sets)
+
+def main():
     conn = connect()
 
     try:
-
-        subjects = read_subjects(conn)
-        countries = read_countries(conn)
-
-        if DEBUG:
-            print(f"Subjects: {len(subjects)}")
-            print(f"Countries: {len(countries)}")
-
-        candidate_sets = generate_candidates(
-            subjects,
-            countries,
-        )
-
-        save_candidate_sets(
-            conn,
-            candidate_sets,
-        )
+        count = rebuild_candidate_sets(conn)
 
         print(
-            f"Saved {len(candidate_sets)} candidate sets."
+            f"Saved {count} candidate sets."
         )
 
     finally:
-
         conn.close()
+
 
 if __name__ == "__main__":
     main()

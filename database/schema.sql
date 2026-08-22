@@ -62,20 +62,19 @@ CREATE TABLE IF NOT EXISTS countries_raw (
 -- ==========================================================
 
 CREATE TABLE IF NOT EXISTS territory_adjustments (
-
+    
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     territory TEXT NOT NULL,
 
-    area_km2 REAL NOT NULL
-        CHECK(area_km2 > 0),
+    area_km2 REAL
+        CHECK(area_km2 IS NULL OR area_km2 > 0),
 
     subtract_from TEXT NOT NULL,
 
     add_to TEXT NOT NULL,
 
     comment TEXT
-
 );
 
 -- ==========================================================
@@ -102,7 +101,6 @@ CREATE TABLE IF NOT EXISTS subjects_final (
 -- ==========================================================
 
 CREATE TABLE IF NOT EXISTS countries_final (
-
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     name TEXT NOT NULL UNIQUE,
@@ -114,8 +112,12 @@ CREATE TABLE IF NOT EXISTS countries_final (
     continent TEXT NOT NULL,
 
     area_km2 REAL NOT NULL
-        CHECK(area_km2 > 0)
+        CHECK(area_km2 > 0),
 
+    status TEXT NOT NULL
+        CHECK(status IN ('independent', 'partially_recognized')),
+
+    notes TEXT
 );
 
 -- ==========================================================

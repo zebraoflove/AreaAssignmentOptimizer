@@ -94,6 +94,11 @@ def clear_countries_table(conn):
 def insert_countries(conn, rows):
     """Добавляет страны в базу."""
 
+    polar_territories = {
+        "Bouvet Island",
+        "Heard Island and McDonald Islands",
+    }
+
     conn.executemany(
         """
         INSERT INTO countries_raw (
@@ -110,7 +115,11 @@ def insert_countries(conn, rows):
                 row["name"].strip(),
                 row["iso2"].strip(),
                 row["iso3"].strip(),
-                row["region"].strip(),
+                (
+                    "Polar"
+                    if row["name"].strip() in polar_territories
+                    else row["region"].strip()
+                ),
                 float(row["area_sq_km"]),
             )
             for row in rows
