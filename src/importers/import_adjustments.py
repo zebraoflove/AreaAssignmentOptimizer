@@ -146,23 +146,53 @@ def apply_territory_adjustments(rows):
     Применяет территориальные корректировки к списку стран.
 
     Правила:
-    - если area_km2 указана явно, используется она;
-    - если area_km2 == None, площадь берётся из записи territory;
-    - subtract_from получает вычитание площади;
-    - add_to получает прибавление площади;
-    - если subtract_from == territory, территория полностью
-      передаётся add_to и её площадь становится 0;
-    - площадь 0 допустима на промежуточном этапе и означает,
-      что территория не попадёт в countries_final;
-    - для агрегированных суверенов после всех корректировок
-      формируется уникальный список континентов их территорий.
+
+    1. area_km2 указана явно:
+       - используется указанное значение;
+       - territory может отсутствовать в countries_raw.
+
+    2. area_km2 == None:
+       - territory обязана существовать в countries_raw;
+       - площадь берётся из записи territory.
+
+    3. Положительная площадь:
+       - subtract_from получает вычитание;
+       - add_to получает прибавление.
+
+    4. Отрицательная площадь:
+       - означает обратное направление той же операции;
+       - subtract_from получает прибавление;
+       - add_to получает вычитание.
+
+    5. Если territory отсутствует в countries_raw, но площадь
+       указана явно, корректировка всё равно выполняется.
+       Это используется, например, для Крыма, Севастополя,
+       ДНР, ЛНР, Запорожской и Херсонской областей, когда
+       эти территории не представлены отдельными странами
+       в countries_raw.
+
+    6. Если subtract_from == territory и territory существует,
+       положительная корректировка полностью передаёт площадь
+       территории add_to, поэтому площадь territory становится 0.
+
+    7. Площадь 0 допустима на промежуточном этапе.
+
+    8. Для агрегированных государств после всех корректировок
+       формируется уникальный список континентов их территорий.
     """
 
-    # Сохраняем исходные континенты до изменения площадей.
+    # --------------------------------------------------------
+    # Сохраняем исходные континенты.
+    # --------------------------------------------------------
+
     source_continents = {
         row["name"]: row.get("continent")
         for row in rows
     }
+
+    # --------------------------------------------------------
+    # Копируем страны в рабочую структуру.
+    # --------------------------------------------------------
 
     countries = {
         row["name"]: {
@@ -172,6 +202,10 @@ def apply_territory_adjustments(rows):
         for row in rows
     }
 
+    # --------------------------------------------------------
+    # Применяем корректировки.
+    # --------------------------------------------------------
+
     for adjustment in TERRITORY_ADJUSTMENTS:
 
         territory = adjustment["territory"]
@@ -179,10 +213,47 @@ def apply_territory_adjustments(rows):
         subtract_from = adjustment["subtract_from"]
         add_to = adjustment["add_to"]
 
-        if territory not in countries:
-            raise ValueError(
-                f"Territory not found in countries_raw: {territory}"
+        # ----------------------------------------------------
+        # Определяем площадь корректировки.
+        #
+        # Если площадь задана явно, territory может отсутствовать.
+        #
+        # Если площадь не задана, territory обязан существовать,
+        # поскольку иначе невозможно определить его площадь.
+        # ----------------------------------------------------
+
+        if area is None:
+
+            if territory not in countries:
+                raise ValueError(
+                    f"Territory not found in countries_raw and "
+                    f"area_km2 is None: {territory}"
+                )
+
+            area = float(
+                countries[territory]["area_km2"]
             )
+
+        else:
+            area = float(area)
+
+        # Нулевая корректировка не имеет смысла.
+        if area == 0:
+            raise ValueError(
+                f"Invalid adjustment area for {territory}: {area}"
+            )
+
+        # ----------------------------------------------------
+        # Источник вычитания обязан существовать.
+        #
+        # Например:
+        #
+        # subtract_from = "Ukraine"
+        # add_to        = "Russia"
+        #
+        # Для Крыма territory может отсутствовать,
+        # но Ukraine и Russia существуют.
+        # ----------------------------------------------------
 
         if subtract_from not in countries:
             raise ValueError(
@@ -190,67 +261,112 @@ def apply_territory_adjustments(rows):
                 f"{subtract_from}"
             )
 
+        # ----------------------------------------------------
+        # add_to может быть агрегированным государством,
+        # которого изначально нет в countries_raw.
+        # ----------------------------------------------------
+
         ensure_aggregate_country(
             countries,
             add_to,
         )
 
-        if territory != add_to:
+        if add_to not in countries:
+            raise ValueError(
+                f"add_to not found in countries_raw or aggregate countries: "
+                f"{add_to}"
+            )
+
+        # ----------------------------------------------------
+        # Континенты.
+        #
+        # Выполняем только если territory реально существует
+        # как отдельная запись.
+        # ----------------------------------------------------
+
+        if (
+            territory != add_to
+            and territory in countries
+        ):
             merge_continents(
                 countries,
                 territory,
                 add_to,
             )
 
-        # Если площадь не указана вручную,
-        # берём её из исходной записи территории.
-        if area is None:
-            area = countries[territory]["area_km2"]
-        else:
-            area = float(area)
+        # ----------------------------------------------------
+        # Применяем математическую операцию.
+        #
+        # area > 0:
+        #
+        #     subtract_from -= area
+        #     add_to       += area
+        #
+        # area < 0:
+        #
+        #     subtract_from -= (-area)
+        #     add_to       += (-area)
+        #
+        # То есть отрицательная площадь автоматически
+        # инвертирует направление переноса:
+        #
+        #     subtract_from += abs(area)
+        #     add_to       -= abs(area)
+        # ----------------------------------------------------
 
-        if area <= 0:
-            raise ValueError(
-                f"Invalid adjustment area for {territory}: {area}"
-            )
-
-        # Полное поглощение территории:
-        # сама территория передаёт всю свою площадь суверену.
-        if subtract_from == territory:
-
-            countries[territory]["area_km2"] -= area
-            countries[add_to]["area_km2"] += area
-
-        else:
-
+        if area > 0:
             countries[subtract_from]["area_km2"] -= area
+            countries[add_to]["area_km2"] += area
+        else:
+            countries[subtract_from]["area_km2"] -= abs(area)
 
-            if countries[subtract_from]["area_km2"] < 0:
+        # ----------------------------------------------------
+        # Если territory существует отдельно и является
+        # источником операции, контролируем её площадь.
+        # ----------------------------------------------------
+
+        if territory in countries:
+
+            if countries[territory]["area_km2"] < -1e-9:
                 raise ValueError(
-                    f"Negative area for {subtract_from}: "
-                    f"{countries[subtract_from]['area_km2']}"
+                    f"Negative area for {territory}: "
+                    f"{countries[territory]['area_km2']}"
                 )
 
-            # Если территория существует отдельной записью,
-            # её площадь не должна автоматически прибавляться
-            # к add_to второй раз.
-            if add_to != territory:
-                countries[add_to]["area_km2"] += area
+            # Полное поглощение.
+            if (
+                subtract_from == territory
+                and area > 0
+                and abs(countries[territory]["area_km2"]) < 1e-9
+            ):
+                countries[territory]["area_km2"] = 0.0
 
-        # После любой корректировки проверяем результат.
-        if countries[territory]["area_km2"] < 0:
+        # ----------------------------------------------------
+        # Контроль источника и получателя.
+        # ----------------------------------------------------
+
+        if countries[subtract_from]["area_km2"] < -1e-9:
             raise ValueError(
-                f"Negative area for {territory}: "
-                f"{countries[territory]['area_km2']}"
+                f"Negative area for {subtract_from}: "
+                f"{countries[subtract_from]['area_km2']}"
             )
 
+        if countries[add_to]["area_km2"] < -1e-9:
+            raise ValueError(
+                f"Negative area for {add_to}: "
+                f"{countries[add_to]['area_km2']}"
+            )
+
+        # Убираем возможный микроскопический отрицательный
+        # остаток из-за операций с float.
+        if abs(countries[subtract_from]["area_km2"]) < 1e-9:
+            countries[subtract_from]["area_km2"] = 0.0
+
+        if abs(countries[add_to]["area_km2"]) < 1e-9:
+            countries[add_to]["area_km2"] = 0.0
+
     # --------------------------------------------------------
-    # Формируем уникальные континенты для агрегированных
-    # суверенов после завершения всех территориальных
-    # корректировок.
-    #
-    # Используем source_continents, потому что поглощённые
-    # территории уже могли получить area_km2 == 0.
+    # Континенты агрегированных государств.
     # --------------------------------------------------------
 
     for aggregate_name, territories in AGGREGATE_COUNTRIES.items():
@@ -269,6 +385,10 @@ def apply_territory_adjustments(rows):
         countries[aggregate_name]["continent"] = "; ".join(
             continents
         )
+
+    # --------------------------------------------------------
+    # Финальный результат.
+    # --------------------------------------------------------
 
     return list(countries.values())
 

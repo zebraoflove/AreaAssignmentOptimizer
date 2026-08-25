@@ -391,6 +391,57 @@ NORWAY_TERRITORY_ADJUSTMENTS = [
 ]
 
 # ============================================================
+# RUSSIA / UKRAINE
+# ============================================================
+
+RUSSIA_UKRAINE_TERRITORY_ADJUSTMENTS = [
+    # Crimea and Sevastopol are already included in the
+    # source area of Russia. Negative area means:
+    # subtract from subtract_from, but do not add to add_to.
+    {
+        "territory": "Республика Крым",
+        "area_km2": -26100.0,
+        "subtract_from": "Ukraine",
+        "add_to": "Russia",
+    },
+    {
+        "territory": "г. Севастополь",
+        "area_km2": -900.0,
+        "subtract_from": "Ukraine",
+        "add_to": "Russia",
+    },
+
+    # These four territories are not included in the
+    # source area of Russia and therefore are transferred
+    # from Ukraine to Russia.
+    {
+        "territory": "Донецкая область",
+        "area_km2": 26520.0,
+        "subtract_from": "Ukraine",
+        "add_to": "Russia",
+    },
+    {
+        "territory": "Луганская область",
+        "area_km2": 26680.0,
+        "subtract_from": "Ukraine",
+        "add_to": "Russia",
+    },
+    {
+        "territory": "Запорожская область",
+        "area_km2": 27180.0,
+        "subtract_from": "Ukraine",
+        "add_to": "Russia",
+    },
+    {
+        "territory": "Херсонская область",
+        "area_km2": 28460.0,
+        "subtract_from": "Ukraine",
+        "add_to": "Russia",
+    },
+]
+
+
+# ============================================================
 # OTHER
 # ============================================================
 
@@ -434,6 +485,8 @@ TERRITORY_ADJUSTMENTS = (
     + AUSTRALIA_TERRITORY_ADJUSTMENTS
 
     + NORWAY_TERRITORY_ADJUSTMENTS
+
+    + RUSSIA_UKRAINE_TERRITORY_ADJUSTMENTS
 
     + OTHER_TERRITORY_ADJUSTMENTS
 
