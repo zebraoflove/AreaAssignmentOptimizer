@@ -6,7 +6,7 @@ from enum import Enum
 # Debug
 # ==========================================================
 
-DEBUG = False
+DEBUG = True
 
 # ==========================================================
 # Algorithm configuration
@@ -224,7 +224,7 @@ def main():
 
         candidate_sets = read_candidate_sets(conn)
 
-        print_algorithm_configuration()
+        print(get_configuration())
 
         assignments = generate_assignments(
             candidate_sets

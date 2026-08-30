@@ -18,21 +18,18 @@ COUNTRIES_FILE = (
 
 
 def read_countries():
-
+    """Читает страны из CSV-файла."""
     with COUNTRIES_FILE.open(
         "r",
         encoding="utf-8",
         newline=""
     ) as file:
-
         reader = csv.DictReader(file)
-
         return list(reader)
 
 
 def validate_countries(rows):
     """Проверяет корректность данных."""
-
     required = {
         "name",
         "iso2",
@@ -55,7 +52,6 @@ def validate_countries(rows):
     valid_rows = []
 
     for row in rows:
-
         name = row["name"].strip()
 
         if not name:
@@ -80,20 +76,22 @@ def validate_countries(rows):
 
         valid_rows.append(row)
 
-    print(f"Validated {len(valid_rows)} countries.")
+    print(
+        f"Validated {len(valid_rows)} countries."
+    )
 
     return valid_rows
 
 
 def clear_countries_table(conn):
     """Очищает таблицу countries_raw."""
-
-    conn.execute("DELETE FROM countries_raw")
+    conn.execute(
+        "DELETE FROM countries_raw"
+    )
 
 
 def insert_countries(conn, rows):
     """Добавляет страны в базу."""
-
     polar_territories = {
         "Bouvet Island",
         "Heard Island and McDonald Islands",
@@ -117,7 +115,8 @@ def insert_countries(conn, rows):
                 row["iso3"].strip(),
                 (
                     "Polar"
-                    if row["name"].strip() in polar_territories
+                    if row["name"].strip()
+                    in polar_territories
                     else row["region"].strip()
                 ),
                 float(row["area_sq_km"]),
@@ -127,32 +126,28 @@ def insert_countries(conn, rows):
     )
 
 
-def import_countries():
-    """Полный процесс импорта."""
-
+def import_countries(conn):
+    """Импортирует страны в countries_raw."""
     rows = read_countries()
-
     rows = validate_countries(rows)
 
-    conn = connect()
+    clear_countries_table(conn)
+    insert_countries(conn, rows)
 
-    try:
-
-        clear_countries_table(conn)
-
-        insert_countries(conn, rows)
-
-        conn.commit()
-
-    finally:
-
-        conn.close()
-
-    print(f"Imported {len(rows)} countries.")
+    return len(rows)
 
 
 def main():
-    import_countries()
+    conn = connect()
+
+    try:
+        count = import_countries(conn)
+        conn.commit()
+        print(
+            f"Imported {count} countries."
+        )
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 в обработанный набор стран.
 """
 
-from src.config.manual_countries import MANUAL_COUNTRIES
+from src.config.countries import MANUAL_COUNTRIES
 
 
 def apply_manual_country_additions(rows):
@@ -22,7 +22,6 @@ def apply_manual_country_additions(rows):
     result = list(rows)
 
     for name, data in MANUAL_COUNTRIES.items():
-
         name = name.strip()
 
         if name in existing_names:
